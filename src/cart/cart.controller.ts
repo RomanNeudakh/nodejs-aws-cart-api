@@ -1,9 +1,7 @@
 import { Controller, Get, Delete, Put, Body, Req, Post, UseGuards, HttpStatus } from '@nestjs/common';
-
 import { BasicAuthGuard, JwtAuthGuard } from '../auth';
 import { OrderService } from '../order';
 import { AppRequest, getUserIdFromRequest } from '../shared';
-
 import { calculateCartTotal } from './models-rules';
 import { CartService } from './services';
 import { CartItem } from './models';
@@ -26,14 +24,22 @@ export class CartController {
   // @UseGuards(JwtAuthGuard)
   // @UseGuards(BasicAuthGuard)
   @Get()
-  findUserCart(@Req() req: AppRequest) {
-    const cart = this.cartService.findOrCreateByUserId(getUserIdFromRequest(req));
-
+  async findUserCart(@Req() req: AppRequest) {
+    const cart = await this.cartService.findOrCreateByUserId(getUserIdFromRequest(req));
+    const userCart = await this.cartRepository.findOne({
+      where: { user_id: getUserIdFromRequest(req) },
+    });
+    let count = 0;
+    let products = await this.cartItemRepository.find({
+      where: { cart_id: userCart.id },
+    });
+    products.forEach(element => {
+      count += element.count
+    });
     return {
       statusCode: HttpStatus.OK,
       message: 'OK',
-      // data: { cart, total: calculateCartTotal(cart) },
-      data: { cart, total: 1 },
+      data: { cart, total: count },
     }
   }
 
@@ -41,27 +47,21 @@ export class CartController {
   // @UseGuards(BasicAuthGuard)
   @Put()
   async updateUserCart(@Req() req: AppRequest, @Body() items: CartItem[]) { // TODO: validate body payload...
-    const cart = this.cartService.updateByUserId(getUserIdFromRequest(req), items)
+    const cart = await this.cartService.updateByUserId(getUserIdFromRequest(req), items)
     const userCart = await this.cartRepository.findOne({
       where: { user_id: getUserIdFromRequest(req) },
     });
-    console.log(userCart)
     let count = 0;
     let products = await this.cartItemRepository.find({
-      where: { cart_id: userCart.id, product_id: items[0].product.id },
+      where: { cart_id: userCart.id },
     });
-    console.log(products)
-    // products.forEach(element => {
-    //   count += element.count
-    // });
+    products.forEach(element => {
+      count += element.count
+    });
     return {
       statusCode: HttpStatus.OK,
       message: 'OK',
-      data: {
-        cart,
-        // total: calculateCartTotal(await cart),
-        total: 'count',
-      }
+      data: { cart, total: count },
     }
   }
 
@@ -70,7 +70,6 @@ export class CartController {
   @Delete()
   clearUserCart(@Req() req: AppRequest) {
     this.cartService.removeByUserId(getUserIdFromRequest(req));
-
     return {
       statusCode: HttpStatus.OK,
       message: 'OK',
@@ -83,17 +82,14 @@ export class CartController {
   checkout(@Req() req: AppRequest, @Body() body) {
     const userId = getUserIdFromRequest(req);
     const cart = this.cartService.findByUserId(userId);
-
     if (!(cart && cart.items.length)) {
       const statusCode = HttpStatus.BAD_REQUEST;
       req.statusCode = statusCode
-
       return {
         statusCode,
         message: 'Cart is empty',
       }
     }
-
     const { id: cartId, items } = cart;
     const total = calculateCartTotal(cart);
     const order = this.orderService.create({
@@ -104,7 +100,6 @@ export class CartController {
       total,
     });
     this.cartService.removeByUserId(userId);
-
     return {
       statusCode: HttpStatus.OK,
       message: 'OK',

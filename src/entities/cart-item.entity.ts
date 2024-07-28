@@ -12,7 +12,6 @@ export class CartItemEntity {
   @Column('int')
   count: number;
 
-  //@ManyToOne(() => CartEntity, cart => cart.items)
   @ManyToOne(() => CartEntity, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'cart_id', referencedColumnName: 'id' })
   cart: CartEntity;

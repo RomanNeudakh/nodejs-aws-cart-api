@@ -20,7 +20,4 @@ export class CartEntity {
     enum: CartStatuses,
   })
   status: CartStatuses;
-
-  // @OneToMany(() => CartItemEntity, cartItem => cartItem.cart)
-  // items: CartItemEntity[];
 }
