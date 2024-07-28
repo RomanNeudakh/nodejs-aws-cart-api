@@ -1,7 +1,8 @@
 # compiled output
 /dist
 /node_modules
-
+*.env
+**/*.env
 # Logs
 logs
 *.log
@@ -9,7 +10,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-**/.env
+
 # OS
 .DS_Store
 
