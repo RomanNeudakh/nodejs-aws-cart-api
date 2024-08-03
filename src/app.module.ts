@@ -14,11 +14,11 @@ import { CartItemEntity } from './entities/cart-item.entity';
     OrderModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST,
-      port: +process.env.DB_PORT,
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
+      host: 'database-1.c7qgu0se05ac.eu-west-1.rds.amazonaws.com',
+      port: 5432,
+      username: 'postgres',
+      password: 'hjvfyytdlf[',
+      database: 'postgres',
       entities: [CartEntity, CartItemEntity],
       synchronize: false, 
       ssl: {
