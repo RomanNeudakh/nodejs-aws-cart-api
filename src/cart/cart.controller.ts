@@ -36,10 +36,14 @@ export class CartController {
     products.forEach(element => {
       count += element.count
     });
+    const returned_cart = {
+      ...cart,
+      items: products
+    }
     return {
       statusCode: HttpStatus.OK,
-      message: 'OK',
-      data: { cart, total: count },
+      message: 'OK_test',
+      data: { returned_cart, total: count },
     }
   }
 

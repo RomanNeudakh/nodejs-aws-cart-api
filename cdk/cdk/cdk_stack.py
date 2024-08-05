@@ -1,27 +1,34 @@
-import os
 from aws_cdk import (
     Stack,
-    aws_lambda as lambda_,
+    aws_apigatewayv2 as apigateway,
+    aws_apigatewayv2_integrations as integrations,
 )
 from constructs import Construct
-from dotenv import load_dotenv
 
-class serverLambda(Stack):
+class httpApi(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
-        load_dotenv()
-        nest_js_lambda = lambda_.Function(self, "NestJsLambda",
-            runtime=lambda_.Runtime.NODEJS_20_X,
-            function_name='NestJsLambda',
-            handler="bundle.handler",
-            code=lambda_.Code.from_asset("bundle"),  
-            memory_size=1024,
-            environment={
-                'DB_HOST': os.getenv('DB_HOST'),
-                'DB_PORT': os.getenv('DB_PORT'),
-                'DB_USERNAME': os.getenv('DB_USERNAME'),
-                'DB_PASSWORD': os.getenv('DB_PASSWORD'),
-                'DB_NAME': os.getenv('DB_NAME'),
-            },
+        eb_app_url = 'http://romanneudakh-cart-api-task2.eu-west-1.elasticbeanstalk.com/'
+        api = apigateway.HttpApi(
+            self, "HttpApi",
+            api_name="ebProxyApi",
+            description="This API proxies to eb application"
         )
-        lambda_url = nest_js_lambda.add_function_url(auth_type=lambda_.FunctionUrlAuthType.NONE)
+        integration_root = integrations.HttpUrlIntegration(
+            'ebIntegration',
+            url=eb_app_url
+        )
+        integration_cart = integrations.HttpUrlIntegration(
+            'ebIntegration',
+            url=f"{eb_app_url}api/profile/cart"
+        )
+        api.add_routes(
+            path="/api/profile/cart",
+            methods=[apigateway.HttpMethod.GET, apigateway.HttpMethod.PUT], 
+            integration=integration_cart
+        )
+        api.add_routes(
+            path="/{proxy+}",
+            methods=[apigateway.HttpMethod.ANY],
+            integration=integration_root
+        )

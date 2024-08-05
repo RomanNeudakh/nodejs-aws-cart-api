@@ -1,5 +1,5 @@
 import aws_cdk as cdk
-from cdk.cdk_stack import serverLambda
+from cdk.cdk_stack import httpApi
 app = cdk.App()
-serverLambda(app, "serverLambda")
+httpApi(app, "httpApi")
 app.synth()
